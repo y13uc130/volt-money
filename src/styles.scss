@@ -45,7 +45,7 @@ body {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding-bottom: 12px;
+        padding-bottom: 24px;
 
         .checkIcon {
           color: rgb(16, 150, 72);
@@ -123,6 +123,86 @@ body {
       }
     }
   }
+  .loanOffersContainer {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    padding: 24px;
+    .headerContainer {
+      display: flex;
+      justify-content: space-between;
+      .logout {
+        font-weight: 500;
+        color: #000;
+        font-size: 16px;
+      }
+      .loanPageHeader {
+        font-weight: 500;
+        color: rgb(49, 52, 60);
+        padding-bottom: 12px;
+        font-size: 20px;
+      }
+    }
+    .cardsContainer {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .cardContainer {
+      margin: 12px;
+      max-width: 328px;
+      flex-basis: 328px;
+      .offer-card {
+        border-radius: 15px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        word-wrap: break-word;
+        background-color: #fff;
+        background-clip: border-box;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        .offer-image {
+          border-radius: 15px;
+          max-width: 100%;
+          height: auto;
+        }
+        .offer-details {
+          padding: 12px;
+          .offerAmount {
+            font-weight: 500;
+            color: #000;
+            padding-bottom: 12px;
+            font-size: 20px;
+          }
+          .offerBtnStyle {
+            background-color: #109648 !important;
+            font-family: Poppins !important;
+            letter-spacing: normal;
+            text-transform: capitalize !important;
+          }
+          .leftContent {
+            font-weight: 500;
+            color: #109648;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+
+            span {
+              font-weight: 400;
+              color: #000;
+              font-size: 12px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+.confettiStyle {
+  position: relative !important;
 }
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -137,4 +217,14 @@ h1.header {
   padding-top: 40px;
   padding-bottom: 24px;
   max-width: 900px;
+}
+
+.modalContent {
+  font-size: 20px;
+  padding: 24px;
+  font-weight: 500;
+  span {
+    font-weight: 400;
+    font-size: 16px;
+  }
 }

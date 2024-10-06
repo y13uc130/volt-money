@@ -4,45 +4,29 @@ import classnames from "classnames";
 import { Button, CircularProgress } from "@mui/material";
 import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import { Formik, Form, Field } from "formik";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { setCookie } from "../utils/cookies";
 
 export const LandingPage = () => {
   const navigate = useNavigate();
   const [focusedField, setFocusedField] = useState("");
+  const [otpValue, setOtpValue] = useState("");
   const [errorsLocal, setErrorsLocal] = useState({});
-  const [otpSent, setIsOtpSent] = useState(false);
+  const [isOtpSent, setIsOtpSent] = useState(false); // TODO: name to be changed
   const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef([]);
-
-  const handleOtpChange = (e, index) => {
-    const value = e.target.value;
-    if (value.length === 1 && index < inputRefs.current.length - 1) {
-      inputRefs.current[index + 1].focus();
-    } else if (value.length === 0 && index > 0) {
-      inputRefs.current[index - 1].focus();
-    }
-    if (value.length === 1 && index === inputRefs.current.length - 1) {
-      navigate("/page2");
-    }
-  };
-
-  const handleKeyDown = (e, index) => {
-    if (e.key === "Backspace") {
-      if (index > 0) {
-        inputRefs.current[index - 1].focus();
-      }
-    }
-  };
 
   const baseURL = "https://468693ab-f4ad-473d-a8c1-a8463dc74ecb.mock.pstmn.io";
 
   const sendOtp = async (phoneNumber) => {
     try {
       const response = await axios.post(`${baseURL}/send-otp`, { phoneNumber });
-      setIsOtpSent(true);
-      setIsLoading(false);
-      return response.data;
+      if (response.data?.status === "success") {
+        setIsOtpSent(response?.data?.otpId);
+        setIsLoading(false);
+        return response.data;
+      }
     } catch (error) {
       setIsLoading(false);
       console.error("Error sending OTP:", error);
@@ -55,11 +39,38 @@ export const LandingPage = () => {
         otpId,
         otpCode,
       });
+      setCookie("userDetails", "Testing", 30);
+      navigate("/loan-offers");
       return response.data;
     } catch (error) {
       console.error("Error verifying OTP:", error);
     }
   };
+
+  const handleOtpChange = (e, index) => {
+    const value = e.target.value;
+    if (value.length === 1 && index < inputRefs.current.length - 1) {
+      inputRefs.current[index + 1].focus();
+    }
+    setOtpValue((preValue) => preValue + value);
+    if (value.length === 1 && index === inputRefs.current.length - 1) {
+      verifyOtp(isOtpSent, otpValue);
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace") {
+      if (index > 0) {
+        inputRefs.current[index - 1].focus();
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (isOtpSent) {
+      inputRefs?.current[0].focus();
+    }
+  }, [isOtpSent]);
 
   return (
     <div className="landingPageContainer">
@@ -71,7 +82,7 @@ export const LandingPage = () => {
         <span>FREE eligibility check in 15 seconds</span>
       </h1>
       <Formik
-        initialValues={{ phone: "", pan: "" }}
+        initialValues={{ phone: "", pan: "", name: "" }}
         validate={(values) => {
           const errors = errorsLocal;
           if (focusedField === "phone") {
@@ -96,27 +107,36 @@ export const LandingPage = () => {
               delete errors.pan;
             }
           }
+          if (focusedField === "name") {
+            if (
+              values.name &&
+              values.name.length > 2 &&
+              !/^[A-Za-z]{3,}(?:[ '-][A-Za-z]+)*$/i.test(values.name)
+            ) {
+              errors.name = "Enter valid name";
+            } else if (values.name) {
+              delete errors.name;
+            }
+          }
           setErrorsLocal(errors);
           return errors;
         }}
-        onSubmit={(values, x) => {
+        onSubmit={(values) => {
           setIsLoading(true);
           sendOtp(values.phone);
         }}
       >
-        {({
-          values,
-          errors,
-          handleChange,
-          handleBlur,
-          handleSubmit,
-          isSubmitting,
-          setFieldValue,
-          setFieldError,
-        }) => {
+        {({ values, errors, handleSubmit, setFieldValue, setFieldError }) => {
+          const isBtnDisabled =
+            values.phone?.length !== 10 ||
+            values.name?.length <= 2 ||
+            values.pan?.length !== 10 ||
+            errors.pan ||
+            errors.name ||
+            errors.phone;
           return (
             <Form className="formContainer">
-              {!otpSent ? (
+              {!isOtpSent ? (
                 <>
                   <div className="formHeader">
                     Check eligibility for mutual fund portfolio
@@ -129,6 +149,48 @@ export const LandingPage = () => {
                     </div>
                   </div>
                   <div className="fieldsContainer w-full">
+                    <div className="relative">
+                      <div className="relative w-full mb-9">
+                        <Field
+                          type="text"
+                          name="name"
+                          id="floating_outlined"
+                          value={values.name}
+                          onFocus={() => setFocusedField("name")}
+                          onBlur={() => {
+                            if (
+                              values.name &&
+                              !/^[A-Za-z]{3,}(?:[ '-][A-Za-z]+)*$/i.test(
+                                values.name
+                              )
+                            ) {
+                              setFieldError("name", "Enter valid name");
+                            }
+                          }}
+                          className={classnames(
+                            "block px-2.5 pb-2.5 pt-4 text-sm text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none focus:outline-none focus:ring-0 peer w-full",
+                            errors.name
+                              ? "focus:border-red-600"
+                              : "focus:border-blue-600"
+                          )}
+                          placeholder="Enter Name"
+                        />
+                        <label
+                          for="floating_outlined"
+                          className={classnames(
+                            "absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1",
+                            errors.name
+                              ? "text-red-600 top-2 -translate-y-4 scale-75"
+                              : "peer-focus:text-blue-600 text-gray-500"
+                          )}
+                        >
+                          Enter Name
+                        </label>
+                      </div>
+                      <div className="errorStyle">
+                        {errors.name && errors.name}
+                      </div>
+                    </div>
                     <div className="relative">
                       <div class="relative w-full mb-9">
                         <Field
@@ -231,32 +293,15 @@ export const LandingPage = () => {
                     <button
                       className={classnames(
                         "btnStyle mt-8 mb-4 w-full",
-                        values.phone?.length !== 10 ||
-                          values.pan?.length !== 10 ||
-                          errors.pan ||
-                          errors.phone
-                          ? "!bg-gray-500"
-                          : ""
+                        isBtnDisabled ? "!bg-gray-500" : ""
                       )}
                       type="button"
                       onClick={(e) => {
-                        if (
-                          !(
-                            values.phone?.length !== 10 ||
-                            values.pan?.length !== 10 ||
-                            errors.pan ||
-                            errors.phone
-                          )
-                        ) {
+                        if (!isBtnDisabled) {
                           handleSubmit(e);
                         }
                       }}
-                      disabled={
-                        values.phone?.length !== 10 ||
-                        values.pan?.length !== 10 ||
-                        errors.pan ||
-                        errors.phone
-                      }
+                      disabled={isBtnDisabled}
                     >
                       Check eligibility for FREE
                       {isLoading && (
