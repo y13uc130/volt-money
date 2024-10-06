@@ -1,12 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import classnames from "classnames";
-import { Button, CircularProgress } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import { Formik, Form, Field } from "formik";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { setCookie } from "../utils/cookies";
+import { getCookie, setCookie } from "../utils/cookies";
 
 export const LandingPage = () => {
   const navigate = useNavigate();
@@ -65,6 +65,12 @@ export const LandingPage = () => {
       }
     }
   };
+  useEffect(() => {
+    const userDetails = getCookie("userDetails");
+    if (userDetails) {
+      navigate("/loan-offers");
+    }
+  }, []);
 
   useEffect(() => {
     if (isOtpSent) {

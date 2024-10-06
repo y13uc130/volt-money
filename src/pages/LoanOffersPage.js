@@ -52,8 +52,8 @@ export const LoanOffersPage = (props) => {
     }
   }, []);
   const handleLogout = useCallback(() => {
-    deleteCookie();
-    navigate("/");
+    deleteCookie("userDetails");
+    navigate("/", { replace: true });
   }, []);
 
   const handleGetOfferClick = useCallback((offer) => {
